@@ -4,220 +4,204 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>學生成績查詢系統</title>
-    <!-- 使用 Tailwind CSS 進行切版 -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 使用 FontAwesome 增加圖示 -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #f3f4f6;
-        }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f0f2f5; }
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
+            border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%;
+            width: 24px; height: 24px; animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .score-card {
-            transition: all 0.3s ease;
-        }
-        .score-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        /* 表格響應式優化 */
-        .table-cell-p { padding: 0.75rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* 表格樣式優化 */
+        .score-row:nth-child(even) { background-color: #f9fafb; }
+        .score-row:hover { background-color: #eff6ff; }
+        
+        /* 組距條狀圖動畫 */
+        .bar-fill { transition: width 1s ease-out; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-10 px-4">
+<body class="flex flex-col items-center min-h-screen py-8 px-4">
 
-    <!-- 標題區 -->
+    <!-- 標題 -->
     <header class="mb-8 text-center">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">
-            <i class="fa-solid fa-graduation-cap text-blue-600 mr-2"></i>學生成績查詢系統
+        <h1 class="text-3xl font-bold text-gray-800 tracking-wide">
+            <i class="fa-solid fa-school text-blue-600 mr-2"></i>成績查詢系統
         </h1>
-        <p class="text-gray-500">請輸入資料查詢評量成績</p>
+        <p class="text-gray-500 mt-2 text-sm">請輸入身分證後五碼進行查詢</p>
     </header>
 
-    <!-- 登入與查詢區 -->
-    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md" id="loginParams">
-        
-        <!-- 載入中遮罩 (初始載入選單時) -->
+    <!-- 查詢表單區 -->
+    <div id="loginCard" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+        <!-- 初始載入動畫 -->
         <div id="initLoader" class="flex justify-center items-center py-4">
             <div class="loader mr-3"></div>
-            <span class="text-gray-600">正在讀取考試列表...</span>
+            <span class="text-gray-500 text-sm">正在讀取評量清單...</span>
         </div>
 
-        <div id="queryForm" class="hidden space-y-4">
-            <!-- 評量選擇 -->
+        <div id="queryForm" class="hidden space-y-5">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">選擇評量</label>
+                <label class="block text-gray-700 font-medium mb-2">選擇評量</label>
                 <div class="relative">
-                    <select id="sheetSelect" class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 border rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-sm transition">
-                        <option value="" disabled selected>請選擇一次評量</option>
+                    <select id="sheetSelect" class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 appearance-none">
+                        <option value="" disabled selected>請選擇...</option>
                     </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </div>
                 </div>
             </div>
 
-            <!-- 身分證輸入 -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">身分證字號 (後五碼)</label>
-                <input type="password" id="idInput" maxlength="5" placeholder="例如: 12345" 
-                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm tracking-widest text-center">
+                <label class="block text-gray-700 font-medium mb-2">身分證字號 (後五碼)</label>
+                <input type="password" id="idInput" maxlength="5" class="bg-gray-50 border border-gray-300 text-gray-900 text-center text-lg tracking-[0.5em] rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="•••••">
             </div>
 
-            <!-- 查詢按鈕 -->
-            <button onclick="performQuery()" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+            <button onclick="performQuery()" id="queryBtn" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-3 transition-colors shadow-md">
                 查詢成績
             </button>
         </div>
-
-        <!-- 錯誤訊息 -->
-        <div id="errorMsg" class="hidden mt-4 p-3 bg-red-50 text-red-700 rounded-md text-sm text-center"></div>
+        
+        <div id="errorMsg" class="hidden mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center border border-red-100"></div>
     </div>
 
-    <!-- 結果顯示區 (隱藏) -->
-    <div id="resultArea" class="hidden w-full max-w-5xl mt-8 animate-fade-in-up">
+    <!-- 結果顯示區 (查詢成功後顯示) -->
+    <div id="resultArea" class="hidden w-full max-w-6xl mt-6 fade-in pb-10">
         
-        <!-- 學生基本資料卡 -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-6 flex justify-between items-center border-l-4 border-blue-500">
+        <!-- 學生資訊卡 -->
+        <div class="bg-white rounded-xl shadow-lg border-l-8 border-blue-500 p-6 mb-6 flex flex-wrap justify-between items-center">
             <div>
-                <h2 class="text-xl font-bold text-gray-800" id="resTitle">第一學期第一次評量</h2>
-                <div class="mt-2 text-gray-600 space-x-4">
-                    <span><i class="fa-solid fa-chair mr-1"></i>座號: <strong id="resSeat" class="text-gray-900">--</strong></span>
-                    <span><i class="fa-solid fa-user mr-1"></i>姓名: <strong id="resName" class="text-gray-900">--</strong></span>
+                <h2 class="text-2xl font-bold text-gray-800 mb-1" id="resTitle">評量名稱</h2>
+                <div class="flex items-center space-x-6 text-gray-600 mt-2">
+                    <span class="flex items-center"><i class="fa-solid fa-chair mr-2 text-blue-400"></i>座號：<b id="resSeat" class="text-xl text-gray-900"></b></span>
+                    <span class="flex items-center"><i class="fa-solid fa-user mr-2 text-blue-400"></i>姓名：<b id="resName" class="text-xl text-gray-900"></b></span>
                 </div>
             </div>
-            <div class="text-right">
-                <div class="text-sm text-gray-500">總平均</div>
-                <div id="resAvg" class="text-3xl font-bold text-blue-600">--</div>
+            <div class="mt-4 md:mt-0 flex space-x-8 text-right">
+                <div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wider">總平均</div>
+                    <div id="resAvg" class="text-3xl font-bold text-blue-600">--</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wider">總分</div>
+                    <div id="resTotal" class="text-3xl font-bold text-gray-800">--</div>
+                </div>
             </div>
         </div>
 
-        <!-- 成績總表 -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+        <!-- 成績列表 -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8 border border-gray-100">
             <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-700">成績明細與全班統計</h3>
+                <h3 class="font-bold text-gray-700"><i class="fa-solid fa-list-ol mr-2"></i>個人成績明細</h3>
             </div>
-            
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">科目</th>
-                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">定期成績</th>
-                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">平時成績</th>
-                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-blue-600 uppercase tracking-wider bg-blue-50">班級平均 (定期)</th>
-                            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-green-600 uppercase tracking-wider bg-green-50">班級高標 (定期)</th>
+                            <th scope="col" class="px-6 py-3 w-1/4">科目</th>
+                            <th scope="col" class="px-6 py-3 text-center">定期評量</th>
+                            <th scope="col" class="px-6 py-3 text-center">平時評量</th>
                         </tr>
                     </thead>
-                    <tbody id="scoreTableBody" class="bg-white divide-y divide-gray-200">
-                        <!-- JS 動態生成 -->
+                    <tbody id="scoreTableBody">
+                        <!-- JS 填入 -->
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 組距分析 -->
-        <h3 class="text-xl font-bold text-gray-800 mb-4 px-2"><i class="fa-solid fa-chart-bar mr-2 text-blue-500"></i>定期成績組距分析</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="distGrid">
-            <!-- JS 動態生成組距卡片 -->
+        <!-- 全班組距分析 (重點功能) -->
+        <h3 class="text-xl font-bold text-gray-800 mb-4 px-1 flex items-center">
+            <i class="fa-solid fa-chart-simple mr-2 text-blue-500"></i>
+            定期評量組距與統計
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="statsGrid">
+            <!-- JS 動態產生卡片 -->
         </div>
 
-        <!-- 返回按鈕 -->
-        <div class="mt-8 text-center">
-            <button onclick="resetQuery()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition">
-                <i class="fa-solid fa-rotate-left mr-2"></i>重新查詢
+        <!-- 重新查詢按鈕 -->
+        <div class="mt-10 text-center">
+            <button onclick="resetQuery()" class="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium rounded-full px-8 py-2 shadow-sm transition">
+                <i class="fa-solid fa-arrow-left mr-2"></i>重新查詢
             </button>
         </div>
-
     </div>
 
-    <!-- JS 邏輯 -->
     <script>
-        // *** 重要：請在此填入您的 Google Apps Script 網址 ***
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnktng5IgUFvGhZPvw9Vtnj7Qq8evWeOZDo4q9MMtWAOCNFKy6nCq055qGLWZdnDRcLg/exec"; 
+        // ************************************************
+        // 請將下方網址換成您部署的 Google Apps Script 網址
+        // ************************************************
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxabW4EXn3YTJjNrXi7Z9AP_TZPtaOMBNqMWXckdJJU3Rd76ONnGneyS-b3tw76F5WLbQ/exec"; 
 
-        const SUBJECT_KEYS = ['chi', 'eng', 'math', 'soc', 'sci'];
-        const SUBJECT_NAMES = { 'chi': '國語', 'eng': '英語', 'math': '數學', 'soc': '社會', 'sci': '自然' };
+        const SUBJECT_MAP = {
+            'chi': '國語', 'eng': '英語', 'math': '數學', 'soc': '社會', 'sci': '自然'
+        };
 
-        // 頁面載入時取得工作表清單
+        // 初始化：取得工作表清單
         document.addEventListener('DOMContentLoaded', async () => {
-            const loader = document.getElementById('initLoader');
-            const form = document.getElementById('queryForm');
-            const select = document.getElementById('sheetSelect');
-            const errorArea = document.getElementById('errorMsg');
-
             if (SCRIPT_URL.includes("XXXXXXXXXXXX")) {
-                showError("請先設定 index.html 內的 SCRIPT_URL 變數！");
-                loader.classList.add('hidden');
+                showError("請先設定 index.html 內的 SCRIPT_URL！");
+                document.getElementById('initLoader').classList.add('hidden');
                 return;
             }
 
             try {
-                const response = await fetch(`${SCRIPT_URL}?op=get_sheets`);
-                const data = await response.json();
+                const res = await fetch(`${SCRIPT_URL}?op=get_sheets`);
+                const data = await res.json();
                 
-                if (Array.isArray(data)) {
-                    data.forEach(sheet => {
-                        const option = document.createElement('option');
-                        option.value = sheet;
-                        option.textContent = sheet;
-                        select.appendChild(option);
-                    });
-                    loader.classList.add('hidden');
-                    form.classList.remove('hidden');
-                } else {
-                    throw new Error("格式錯誤");
-                }
+                const select = document.getElementById('sheetSelect');
+                if (data.error) throw new Error(data.error);
+
+                data.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.innerText = name;
+                    select.appendChild(opt);
+                });
+
+                document.getElementById('initLoader').classList.add('hidden');
+                document.getElementById('queryForm').classList.remove('hidden');
+
             } catch (e) {
-                console.error(e);
-                loader.classList.add('hidden');
-                showError("無法讀取評量清單，請檢查網路或 Script 設定。");
+                showError("無法連線到資料庫，請檢查網路或 Script 設定。");
+                document.getElementById('initLoader').classList.add('hidden');
             }
         });
 
+        // 執行查詢
         async function performQuery() {
             const sheet = document.getElementById('sheetSelect').value;
             const idLast5 = document.getElementById('idInput').value;
-            const btn = document.querySelector('button[onclick="performQuery()"]');
-            
-            if (!sheet) { alert('請選擇評量'); return; }
-            if (idLast5.length !== 5) { alert('請輸入完整的身分證後五碼'); return; }
+            const btn = document.getElementById('queryBtn');
 
-            // UI Loading 狀態
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>查詢中...';
+            if (!sheet) { alert("請選擇評量"); return; }
+            if (idLast5.length !== 5) { alert("請輸入完整的 5 碼"); return; }
+
+            // UI Loading
+            btn.innerHTML = '<div class="loader inline-block w-4 h-4 border-2 border-white border-t-transparent mr-2"></div> 查詢中...';
             btn.disabled = true;
-            hideError();
+            document.getElementById('errorMsg').classList.add('hidden');
 
             try {
                 const url = `${SCRIPT_URL}?op=query&sheet_name=${encodeURIComponent(sheet)}&id_last5=${encodeURIComponent(idLast5)}`;
-                
-                // 使用 fetch 呼叫 GAS
-                const response = await fetch(url);
-                
-                // 處理轉址 (GitHub Pages 呼叫 GAS 有時會遇到 CORS 或 redirect，通常 fetch 會自動處理 redirect)
-                // 如果遇到 CORS 錯誤，通常是因為 GAS 發生錯誤回傳了 HTML 而非 JSON
-                
-                const json = await response.json();
+                const res = await fetch(url);
+                const data = await res.json();
 
-                if (json.error) {
-                    showError(json.error);
+                if (data.error) {
+                    showError(data.error);
                 } else {
-                    renderResult(sheet, json);
+                    renderResult(sheet, data);
                 }
-
             } catch (e) {
                 console.error(e);
-                showError("查詢失敗，請稍後再試。");
+                showError("查詢發生錯誤，請稍後再試");
             } finally {
                 btn.innerHTML = '查詢成績';
                 btn.disabled = false;
@@ -225,96 +209,118 @@
         }
 
         function renderResult(sheetName, data) {
-            const student = data.student;
+            const s = data.student;
             const stats = data.stats;
 
-            // 1. 填寫基本資料
-            document.getElementById('resTitle').textContent = sheetName;
-            document.getElementById('resSeat').textContent = student.seat;
-            document.getElementById('resName').textContent = student.name;
-            document.getElementById('resAvg').textContent = student.scores.avg;
+            // 1. 填入基本資料
+            document.getElementById('resTitle').innerText = sheetName;
+            document.getElementById('resSeat').innerText = s.seat;
+            document.getElementById('resName').innerText = s.name;
+            document.getElementById('resAvg').innerText = s.avg;
+            document.getElementById('resTotal').innerText = s.total;
 
-            // 2. 填寫表格
+            // 2. 填入成績列表
             const tbody = document.getElementById('scoreTableBody');
             tbody.innerHTML = '';
-
-            SUBJECT_KEYS.forEach(key => {
-                const sData = student.scores[key];
-                const sStats = stats[key];
-                
+            
+            Object.keys(SUBJECT_MAP).forEach(key => {
+                const subData = s.subjects[key];
                 const tr = document.createElement('tr');
+                tr.className = "score-row border-b";
                 tr.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 sticky left-0 bg-white">${SUBJECT_NAMES[key]}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-700 font-medium">${sData.exam}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">${sData.reg}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-blue-600 bg-blue-50 font-bold">${sStats.avg}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-green-600 bg-green-50 font-bold">${sStats.highStd}</td>
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap bg-gray-50">
+                        ${SUBJECT_MAP[key]}
+                    </th>
+                    <td class="px-6 py-4 text-center font-bold text-gray-700 text-base">
+                        ${subData.reg}
+                    </td>
+                    <td class="px-6 py-4 text-center text-gray-500">
+                        ${subData.daily}
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            // 3. 填寫組距卡片
-            const distGrid = document.getElementById('distGrid');
-            distGrid.innerHTML = '';
+            // 3. 填入組距卡片 (含平均與高標)
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = '';
 
-            SUBJECT_KEYS.forEach(key => {
-                const dist = stats[key].distribution;
-                const ranges = [
-                    { label: '100分', key: '100', color: 'bg-indigo-100 text-indigo-800' },
-                    { label: '90-99分', key: '90-99', color: 'bg-blue-100 text-blue-800' },
-                    { label: '80-89分', key: '80-89', color: 'bg-green-100 text-green-800' },
-                    { label: '70-79分', key: '70-79', color: 'bg-yellow-100 text-yellow-800' },
-                    { label: '60-69分', key: '60-69', color: 'bg-orange-100 text-orange-800' },
-                    { label: '60分以下', key: '<60', color: 'bg-red-100 text-red-800' },
-                ];
+            const distLabels = [
+                { k: '100', name: '100分', color: 'bg-purple-500' },
+                { k: '90-99', name: '90-99分', color: 'bg-blue-500' },
+                { k: '80-89', name: '80-89分', color: 'bg-green-500' },
+                { k: '70-79', name: '70-79分', color: 'bg-yellow-500' },
+                { k: '60-69', name: '60-69分', color: 'bg-orange-500' },
+                { k: 'under60', name: '60分以下', color: 'bg-red-500' }
+            ];
 
-                let rowsHtml = '';
-                ranges.forEach(r => {
-                    const count = dist[r.key];
-                    if (count > 0 || true) { // 顯示所有區間
-                        rowsHtml += `
-                            <div class="flex justify-between items-center text-sm py-1 border-b border-gray-100 last:border-0">
-                                <span class="px-2 py-0.5 rounded-full text-xs font-medium ${r.color}">${r.label}</span>
-                                <span class="font-bold text-gray-700">${count} 人</span>
+            Object.keys(SUBJECT_MAP).forEach(key => {
+                const stat = stats[key];
+                const totalCount = stat.totalCount;
+
+                // 產生長條圖 HTML
+                let barsHtml = '';
+                distLabels.forEach(d => {
+                    const count = stat.distribution[d.k];
+                    // 計算百分比用於長條圖寬度 (給予最小寬度以免看不見)
+                    const percent = totalCount > 0 ? (count / totalCount) * 100 : 0;
+                    
+                    barsHtml += `
+                        <div class="flex items-center text-xs mb-2">
+                            <div class="w-16 text-gray-500 font-medium text-right pr-2">${d.name}</div>
+                            <div class="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden relative">
+                                <div class="h-full ${d.color} opacity-80 rounded-full" style="width: ${percent}%"></div>
+                                <div class="absolute inset-0 flex items-center justify-start pl-2 text-[10px] font-bold text-gray-700">
+                                    ${count > 0 ? count + '人' : ''}
+                                </div>
                             </div>
-                        `;
-                    }
+                        </div>
+                    `;
                 });
 
                 const card = document.createElement('div');
-                card.className = "bg-white p-5 rounded-lg shadow border border-gray-100 score-card";
+                card.className = "bg-white rounded-xl shadow p-5 border border-gray-100 flex flex-col justify-between";
                 card.innerHTML = `
-                    <h4 class="font-bold text-gray-800 mb-3 border-b pb-2 flex justify-between">
-                        <span>${SUBJECT_NAMES[key]}</span>
-                        <span class="text-xs text-gray-500 font-normal self-end">定期評量分佈</span>
-                    </h4>
-                    <div class="space-y-1">
-                        ${rowsHtml}
+                    <div>
+                        <h4 class="font-bold text-lg text-gray-800 mb-3 border-b pb-2 flex justify-between items-center">
+                            <span>${SUBJECT_MAP[key]}</span>
+                            <span class="text-xs font-normal text-gray-400 bg-gray-100 px-2 py-1 rounded">定期評量</span>
+                        </h4>
+                        <div class="mb-4">
+                            ${barsHtml}
+                        </div>
+                    </div>
+                    
+                    <!-- 平均與高標顯示區 (依照要求放在組距下方) -->
+                    <div class="mt-2 pt-3 border-t border-dashed border-gray-200 grid grid-cols-2 gap-2 text-center bg-gray-50 rounded-lg p-2">
+                        <div>
+                            <div class="text-xs text-gray-500 mb-1">班級平均</div>
+                            <div class="text-lg font-bold text-blue-600">${stat.avg}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500 mb-1">班級高標</div>
+                            <div class="text-lg font-bold text-green-600">${stat.highStd}</div>
+                        </div>
                     </div>
                 `;
-                distGrid.appendChild(card);
+                grid.appendChild(card);
             });
 
             // 切換視圖
-            document.getElementById('loginParams').classList.add('hidden');
+            document.getElementById('loginCard').classList.add('hidden');
             document.getElementById('resultArea').classList.remove('hidden');
         }
 
         function resetQuery() {
             document.getElementById('resultArea').classList.add('hidden');
-            document.getElementById('loginParams').classList.remove('hidden');
+            document.getElementById('loginCard').classList.remove('hidden');
             document.getElementById('idInput').value = '';
-            document.getElementById('errorMsg').classList.add('hidden');
         }
 
         function showError(msg) {
             const el = document.getElementById('errorMsg');
-            el.textContent = msg;
+            el.innerText = msg;
             el.classList.remove('hidden');
-        }
-
-        function hideError() {
-            document.getElementById('errorMsg').classList.add('hidden');
         }
     </script>
 </body>

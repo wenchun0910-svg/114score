@@ -10,317 +10,375 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f0f2f5; }
-        .loader {
-            border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%;
-            width: 24px; height: 24px; animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .fade-in { animation: fadeIn 0.5s ease-in; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; }
+        
+        /* 動畫效果 */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* 表格樣式優化 */
-        .score-row:nth-child(even) { background-color: #f9fafb; }
-        .score-row:hover { background-color: #eff6ff; }
-        
-        /* 組距條狀圖動畫 */
-        .bar-fill { transition: width 1s ease-out; }
+        .loader {
+            border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%;
+            width: 20px; height: 20px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="flex flex-col items-center min-h-screen py-8 px-4">
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
 
-    <!-- 標題 -->
+    <!-- 頁頭 -->
     <header class="mb-8 text-center">
-        <h1 class="text-3xl font-bold text-gray-800 tracking-wide">
-            <i class="fa-solid fa-school text-blue-600 mr-2"></i>成績查詢系統
+        <h1 class="text-3xl font-bold text-gray-800 tracking-wide mb-2">
+            <i class="fa-solid fa-graduation-cap text-blue-600 mr-2"></i>學生成績查詢
         </h1>
-        <p class="text-gray-500 mt-2 text-sm">請輸入身分證後五碼進行查詢</p>
+        <p class="text-gray-500 text-sm">請先登入後選擇評量</p>
     </header>
 
-    <!-- 查詢表單區 -->
-    <div id="loginCard" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
-        <!-- 初始載入動畫 -->
-        <div id="initLoader" class="flex justify-center items-center py-4">
-            <div class="loader mr-3"></div>
-            <span class="text-gray-500 text-sm">正在讀取評量清單...</span>
-        </div>
-
-        <div id="queryForm" class="hidden space-y-5">
-            <div>
-                <label class="block text-gray-700 font-medium mb-2">選擇評量</label>
-                <div class="relative">
-                    <select id="sheetSelect" class="w-full bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 appearance-none">
-                        <option value="" disabled selected>請選擇...</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <i class="fa-solid fa-chevron-down text-xs"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-gray-700 font-medium mb-2">身分證字號 (後五碼)</label>
-                <input type="password" id="idInput" maxlength="5" class="bg-gray-50 border border-gray-300 text-gray-900 text-center text-lg tracking-[0.5em] rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" placeholder="•••••">
-            </div>
-
-            <button onclick="performQuery()" id="queryBtn" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-3 transition-colors shadow-md">
-                查詢成績
-            </button>
-        </div>
+    <!-- 1. 登入區塊 (Login Panel) -->
+    <div id="loginPanel" class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm border border-gray-100 fade-in">
+        <h2 class="text-xl font-bold text-gray-800 mb-6 text-center">學生登入</h2>
         
-        <div id="errorMsg" class="hidden mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center border border-red-100"></div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-gray-700 font-medium mb-2 text-sm">身分證字號 (後五碼)</label>
+                <input type="password" id="loginIdInput" maxlength="5" 
+                       class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-center text-xl tracking-[0.5em] rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-3 transition" 
+                       placeholder="•••••">
+            </div>
+
+            <button onclick="handleLogin()" id="loginBtn" class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-lg px-5 py-3 transition shadow-md flex justify-center items-center">
+                登入系統
+            </button>
+            
+            <p id="loginError" class="text-red-500 text-sm text-center hidden mt-2"></p>
+        </div>
     </div>
 
-    <!-- 結果顯示區 (查詢成功後顯示) -->
-    <div id="resultArea" class="hidden w-full max-w-6xl mt-6 fade-in pb-10">
+    <!-- 2. 儀表板區塊 (Dashboard) - 包含選單與結果，登入後才顯示 -->
+    <div id="dashboardPanel" class="hidden w-full max-w-5xl fade-in">
         
-        <!-- 學生資訊卡 -->
-        <div class="bg-white rounded-xl shadow-lg border-l-8 border-blue-500 p-6 mb-6 flex flex-wrap justify-between items-center">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-1" id="resTitle">評量名稱</h2>
-                <div class="flex items-center space-x-6 text-gray-600 mt-2">
-                    <span class="flex items-center"><i class="fa-solid fa-chair mr-2 text-blue-400"></i>座號：<b id="resSeat" class="text-xl text-gray-900"></b></span>
-                    <span class="flex items-center"><i class="fa-solid fa-user mr-2 text-blue-400"></i>姓名：<b id="resName" class="text-xl text-gray-900"></b></span>
-                </div>
-            </div>
-            <div class="mt-4 md:mt-0 flex space-x-8 text-right">
-                <div>
-                    <div class="text-xs text-gray-500 uppercase tracking-wider">總分</div>
-                    <div id="resAvg" class="text-3xl font-bold text-blue-600">--</div>
+        <!-- 歡迎與選單 Bar -->
+        <div class="bg-white p-4 rounded-xl shadow-md mb-6 flex flex-col md:flex-row items-center justify-between border-l-4 border-blue-500">
+            <div class="mb-4 md:mb-0 flex items-center">
+                <div class="bg-blue-100 p-3 rounded-full mr-4 text-blue-600">
+                    <i class="fa-solid fa-user-check text-xl"></i>
                 </div>
                 <div>
-                    <div class="text-xs text-gray-500 uppercase tracking-wider">備註</div>
-                    <div id="resTotal" class="text-3xl font-bold text-gray-800">--</div>
+                    <p class="text-xs text-gray-500">歡迎回來</p>
+                    <h3 class="text-lg font-bold text-gray-800"><span id="userDisplayName">同學</span></h3>
                 </div>
             </div>
-        </div>
 
-        <!-- 成績列表 -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8 border border-gray-100">
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                <h3 class="font-bold text-gray-700"><i class="fa-solid fa-list-ol mr-2"></i>個人成績明細</h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 w-1/4">科目</th>
-                            <th scope="col" class="px-6 py-3 text-center">定期評量</th>
-                            <th scope="col" class="px-6 py-3 text-center">平時評量</th>
-                        </tr>
-                    </thead>
-                    <tbody id="scoreTableBody">
-                        <!-- JS 填入 -->
-                    </tbody>
-                </table>
+            <div class="flex items-center w-full md:w-auto space-x-2">
+                <!-- 下拉選單 -->
+                <div class="relative w-full md:w-64">
+                    <select id="examSelect" onchange="handleExamChange()" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                        <option value="" disabled selected>請選擇評量...</option>
+                        <!-- 選單由 JS 載入 -->
+                    </select>
+                </div>
+                <!-- 登出按鈕 -->
+                <button onclick="logout()" class="text-gray-500 hover:text-red-500 bg-gray-100 hover:bg-red-50 p-2.5 rounded-lg transition" title="登出">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
             </div>
         </div>
 
-        <!-- 全班組距分析 (重點功能) -->
-        <h3 class="text-xl font-bold text-gray-800 mb-4 px-1 flex items-center">
-            <i class="fa-solid fa-chart-simple mr-2 text-blue-500"></i>
-            定期評量組距與統計
-        </h3>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="statsGrid">
-            <!-- JS 動態產生卡片 -->
-        </div>
+        <!-- 3. 成績結果區 (Result Area) -->
+        <div id="resultArea" class="hidden animate-fade-in-up">
+            
+            <!-- 載入中動畫 -->
+            <div id="resultLoader" class="hidden py-10 text-center">
+                <div class="loader inline-block border-t-blue-600 w-8 h-8"></div>
+                <p class="mt-3 text-gray-500">正在讀取成績資料...</p>
+            </div>
 
-        <!-- 重新查詢按鈕 -->
-        <div class="mt-10 text-center">
-            <button onclick="resetQuery()" class="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium rounded-full px-8 py-2 shadow-sm transition">
-                <i class="fa-solid fa-arrow-left mr-2"></i>重新查詢
-            </button>
+            <!-- 成績內容 -->
+            <div id="resultContent" class="hidden">
+                <!-- 學生基本分 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded-lg shadow text-center">
+                        <div class="text-xs text-gray-500 mb-1">座號</div>
+                        <div class="text-xl font-bold text-gray-800" id="resSeat">--</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow text-center">
+                        <div class="text-xs text-gray-500 mb-1">姓名</div>
+                        <div class="text-xl font-bold text-gray-800" id="resName">--</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow text-center border-b-4 border-blue-500">
+                        <div class="text-xs text-gray-500 mb-1">總分</div>
+                        <div class="text-2xl font-bold text-blue-600" id="resAvg">--</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow text-center">
+                        <div class="text-xs text-gray-500 mb-1">備註</div>
+                        <div class="text-xl font-bold text-gray-700" id="resTotal">--</div>
+                    </div>
+                </div>
+
+                <!-- 表格 -->
+                <div class="bg-white rounded-xl shadow overflow-hidden mb-8">
+                    <div class="bg-gray-50 px-6 py-3 border-b border-gray-200 font-bold text-gray-700">
+                        成績明細
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                <tr>
+                                    <th class="px-6 py-3">科目</th>
+                                    <th class="px-6 py-3 text-center">定期</th>
+                                    <th class="px-6 py-3 text-center">平時</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scoreTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 組距統計 -->
+                <h4 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-chart-simple text-blue-500 mr-2"></i>
+                    全班定期成績統計與組距
+                </h4>
+                <div id="statsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-10">
+                    <!-- JS 生成 -->
+                </div>
+            </div>
+
+            <!-- 錯誤訊息 -->
+            <div id="resultError" class="hidden bg-red-50 text-red-600 p-4 rounded-lg text-center mt-4">
+                查無資料
+            </div>
         </div>
     </div>
 
     <script>
         // ************************************************
-        // 請將下方網址換成您部署的 Google Apps Script 網址
+        // 請將此處替換為您 新部署 的 Apps Script 網址
         // ************************************************
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxabW4EXn3YTJjNrXi7Z9AP_TZPtaOMBNqMWXckdJJU3Rd76ONnGneyS-b3tw76F5WLbQ/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwyrxiuMz0kI8mI1gEt0JjT3zm12BEBZzT_PKEUgcK-o_DAKxy6rjeHnx5XWZumYUDJpQ/exec"; 
+
+        // 全域變數儲存登入狀態
+        let currentUserId = "";
+        let currentUserName = "";
+        let sheetList = [];
 
         const SUBJECT_MAP = {
             'chi': '國語', 'eng': '英語', 'math': '數學', 'soc': '社會', 'sci': '自然'
         };
 
-        // 初始化：取得工作表清單
-        document.addEventListener('DOMContentLoaded', async () => {
+        // --- 登入邏輯 ---
+
+        async function handleLogin() {
+            const idInput = document.getElementById('loginIdInput');
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('loginError');
+            const val = idInput.value.trim();
+
+            if (val.length !== 5) {
+                showLoginError("請輸入完整的 5 碼身分證字號");
+                return;
+            }
+
+            // UI Loading
+            btn.innerHTML = '<div class="loader mr-2 border-t-white"></div> 驗證中...';
+            btn.disabled = true;
+            errorMsg.classList.add('hidden');
+
             if (SCRIPT_URL.includes("XXXXXXXXXXXX")) {
-                showError("請先設定 index.html 內的 SCRIPT_URL！");
-                document.getElementById('initLoader').classList.add('hidden');
+                showLoginError("請先設定 index.html 內的 SCRIPT_URL！");
+                btn.innerHTML = '登入系統';
+                btn.disabled = false;
                 return;
             }
 
             try {
-                const res = await fetch(`${SCRIPT_URL}?op=get_sheets`);
-                const data = await res.json();
-                
-                const select = document.getElementById('sheetSelect');
-                if (data.error) throw new Error(data.error);
-
-                data.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    opt.innerText = name;
-                    select.appendChild(opt);
-                });
-
-                document.getElementById('initLoader').classList.add('hidden');
-                document.getElementById('queryForm').classList.remove('hidden');
-
-            } catch (e) {
-                showError("無法連線到資料庫，請檢查網路或 Script 設定。");
-                document.getElementById('initLoader').classList.add('hidden');
-            }
-        });
-
-        // 執行查詢
-        async function performQuery() {
-            const sheet = document.getElementById('sheetSelect').value;
-            const idLast5 = document.getElementById('idInput').value;
-            const btn = document.getElementById('queryBtn');
-
-            if (!sheet) { alert("請選擇評量"); return; }
-            if (idLast5.length !== 5) { alert("請輸入完整的 5 碼"); return; }
-
-            // UI Loading
-            btn.innerHTML = '<div class="loader inline-block w-4 h-4 border-2 border-white border-t-transparent mr-2"></div> 查詢中...';
-            btn.disabled = true;
-            document.getElementById('errorMsg').classList.add('hidden');
-
-            try {
-                const url = `${SCRIPT_URL}?op=query&sheet_name=${encodeURIComponent(sheet)}&id_last5=${encodeURIComponent(idLast5)}`;
-                const res = await fetch(url);
+                // 1. 呼叫後端驗證身分
+                const res = await fetch(`${SCRIPT_URL}?op=login&id_last5=${val}`);
                 const data = await res.json();
 
-                if (data.error) {
-                    showError(data.error);
+                if (data.success) {
+                    // 2. 登入成功
+                    currentUserId = val;
+                    currentUserName = data.name;
+                    
+                    // 3. 順便取得評量清單 (如果還沒抓過)
+                    if (sheetList.length === 0) {
+                        const sheetRes = await fetch(`${SCRIPT_URL}?op=get_sheets`);
+                        const sheetData = await sheetRes.json();
+                        if (sheetData.sheets) {
+                            sheetList = sheetData.sheets;
+                            renderSheetOptions();
+                        }
+                    }
+                    
+                    // 4. 切換畫面
+                    switchScreen('dashboard');
                 } else {
-                    renderResult(sheet, data);
+                    showLoginError(data.error || "驗證失敗");
                 }
             } catch (e) {
                 console.error(e);
-                showError("查詢發生錯誤，請稍後再試");
+                showLoginError("連線錯誤，請檢查網路");
             } finally {
-                btn.innerHTML = '查詢成績';
+                btn.innerHTML = '登入系統';
                 btn.disabled = false;
             }
         }
 
-        function renderResult(sheetName, data) {
+        function showLoginError(msg) {
+            const el = document.getElementById('loginError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function switchScreen(screen) {
+            const loginPanel = document.getElementById('loginPanel');
+            const dashboardPanel = document.getElementById('dashboardPanel');
+            const userNameEl = document.getElementById('userDisplayName');
+
+            if (screen === 'dashboard') {
+                loginPanel.classList.add('hidden');
+                dashboardPanel.classList.remove('hidden');
+                userNameEl.textContent = currentUserName + " (" + currentUserId + ")";
+            } else {
+                loginPanel.classList.remove('hidden');
+                dashboardPanel.classList.add('hidden');
+                // 重置
+                document.getElementById('loginIdInput').value = '';
+                document.getElementById('resultArea').classList.add('hidden');
+                document.getElementById('examSelect').selectedIndex = 0;
+            }
+        }
+
+        function logout() {
+            currentUserId = "";
+            currentUserName = "";
+            switchScreen('login');
+        }
+
+        function renderSheetOptions() {
+            const select = document.getElementById('examSelect');
+            select.innerHTML = '<option value="" disabled selected>請選擇評量...</option>';
+            sheetList.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                select.appendChild(opt);
+            });
+        }
+
+        // --- 查詢邏輯 (當選單改變時觸發) ---
+
+        async function handleExamChange() {
+            const select = document.getElementById('examSelect');
+            const sheetName = select.value;
+            
+            if (!sheetName) return;
+
+            const resultArea = document.getElementById('resultArea');
+            const loader = document.getElementById('resultLoader');
+            const content = document.getElementById('resultContent');
+            const errorArea = document.getElementById('resultError');
+
+            // 顯示 Loading
+            resultArea.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            content.classList.add('hidden');
+            errorArea.classList.add('hidden');
+
+            try {
+                const url = `${SCRIPT_URL}?op=query&sheet_name=${encodeURIComponent(sheetName)}&id_last5=${encodeURIComponent(currentUserId)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                loader.classList.add('hidden');
+
+                if (data.success) {
+                    renderResult(data);
+                    content.classList.remove('hidden');
+                } else {
+                    errorArea.textContent = data.error || "查無此評量資料";
+                    errorArea.classList.remove('hidden');
+                }
+
+            } catch (e) {
+                loader.classList.add('hidden');
+                errorArea.textContent = "查詢發生錯誤";
+                errorArea.classList.remove('hidden');
+            }
+        }
+
+        function renderResult(data) {
             const s = data.student;
             const stats = data.stats;
 
-            // 1. 填入基本資料
-            document.getElementById('resTitle').innerText = sheetName;
-            document.getElementById('resSeat').innerText = s.seat;
-            document.getElementById('resName').innerText = s.name;
-            document.getElementById('resAvg').innerText = s.avg;
-            document.getElementById('resTotal').innerText = s.total;
+            // 基本資料
+            document.getElementById('resSeat').textContent = s.seat;
+            document.getElementById('resName').textContent = s.name;
+            document.getElementById('resAvg').textContent = s.avg;
+            document.getElementById('resTotal').textContent = s.total;
 
-            // 2. 填入成績列表
+            // 表格
             const tbody = document.getElementById('scoreTableBody');
             tbody.innerHTML = '';
-            
             Object.keys(SUBJECT_MAP).forEach(key => {
-                const subData = s.subjects[key];
+                const sub = s.subjects[key];
                 const tr = document.createElement('tr');
-                tr.className = "score-row border-b";
+                tr.className = "border-b hover:bg-gray-50";
                 tr.innerHTML = `
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap bg-gray-50">
-                        ${SUBJECT_MAP[key]}
-                    </th>
-                    <td class="px-6 py-4 text-center font-bold text-gray-700 text-base">
-                        ${subData.reg}
-                    </td>
-                    <td class="px-6 py-4 text-center text-gray-500">
-                        ${subData.daily}
-                    </td>
+                    <td class="px-6 py-4 font-medium text-gray-900">${SUBJECT_MAP[key]}</td>
+                    <td class="px-6 py-4 text-center font-bold text-gray-700">${sub.reg}</td>
+                    <td class="px-6 py-4 text-center text-gray-500">${sub.daily}</td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            // 3. 填入組距卡片 (含平均與高標)
+            // 統計卡片
             const grid = document.getElementById('statsGrid');
             grid.innerHTML = '';
-
-            const distLabels = [
-                { k: '100', name: '100分', color: 'bg-purple-500' },
-                { k: '90-99', name: '90-99分', color: 'bg-blue-500' },
-                { k: '80-89', name: '80-89分', color: 'bg-green-500' },
-                { k: '70-79', name: '70-79分', color: 'bg-yellow-500' },
-                { k: '60-69', name: '60-69分', color: 'bg-orange-500' },
-                { k: 'under60', name: '60分以下', color: 'bg-red-500' }
+            
+            const distConfig = [
+                { k: '100', label: '100分', color: 'bg-purple-500' },
+                { k: '90-99', label: '90-99', color: 'bg-blue-500' },
+                { k: '80-89', label: '80-89', color: 'bg-green-500' },
+                { k: '70-79', label: '70-79', color: 'bg-yellow-500' },
+                { k: '60-69', label: '60-69', color: 'bg-orange-500' },
+                { k: 'under60', label: '<60', color: 'bg-red-500' },
             ];
 
             Object.keys(SUBJECT_MAP).forEach(key => {
                 const stat = stats[key];
-                const totalCount = stat.totalCount;
+                const total = stat.totalCount;
 
-                // 產生長條圖 HTML
-                let barsHtml = '';
-                distLabels.forEach(d => {
-                    const count = stat.distribution[d.k];
-                    // 計算百分比用於長條圖寬度 (給予最小寬度以免看不見)
-                    const percent = totalCount > 0 ? (count / totalCount) * 100 : 0;
-                    
-                    barsHtml += `
-                        <div class="flex items-center text-xs mb-2">
-                            <div class="w-16 text-gray-500 font-medium text-right pr-2">${d.name}</div>
-                            <div class="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden relative">
-                                <div class="h-full ${d.color} opacity-80 rounded-full" style="width: ${percent}%"></div>
-                                <div class="absolute inset-0 flex items-center justify-start pl-2 text-[10px] font-bold text-gray-700">
-                                    ${count > 0 ? count + '人' : ''}
-                                </div>
+                let bars = '';
+                distConfig.forEach(cfg => {
+                    const count = stat.distribution[cfg.k];
+                    const pct = total > 0 ? (count / total) * 100 : 0;
+                    bars += `
+                        <div class="flex items-center text-xs mb-1.5">
+                            <span class="w-12 text-gray-500 text-right mr-2">${cfg.label}</span>
+                            <div class="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden relative">
+                                <div class="h-full ${cfg.color} opacity-80" style="width: ${pct}%"></div>
                             </div>
+                            <span class="w-8 text-right font-bold text-gray-600">${count}</span>
                         </div>
                     `;
                 });
 
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-xl shadow p-5 border border-gray-100 flex flex-col justify-between";
+                card.className = "bg-white p-5 rounded-xl shadow border border-gray-100";
                 card.innerHTML = `
-                    <div>
-                        <h4 class="font-bold text-lg text-gray-800 mb-3 border-b pb-2 flex justify-between items-center">
-                            <span>${SUBJECT_MAP[key]}</span>
-                            <span class="text-xs font-normal text-gray-400 bg-gray-100 px-2 py-1 rounded">定期評量</span>
-                        </h4>
-                        <div class="mb-4">
-                            ${barsHtml}
-                        </div>
+                    <div class="flex justify-between items-center mb-3 border-b pb-2">
+                        <h5 class="font-bold text-gray-800">${SUBJECT_MAP[key]}</h5>
+                        <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">定期</span>
                     </div>
-                    
-                    <!-- 平均與高標顯示區 (依照要求放在組距下方) -->
-                    <div class="mt-2 pt-3 border-t border-dashed border-gray-200 grid grid-cols-2 gap-2 text-center bg-gray-50 rounded-lg p-2">
-                        <div>
-                            <div class="text-xs text-gray-500 mb-1">班級平均</div>
-                            <div class="text-lg font-bold text-blue-600">${stat.avg}</div>
-                        </div>
-                        <div>
-                            <div class="text-xs text-gray-500 mb-1">班級高標</div>
-                            <div class="text-lg font-bold text-green-600">${stat.highStd}</div>
-                        </div>
+                    <div class="mb-4">${bars}</div>
+                    <div class="grid grid-cols-2 gap-2 text-center bg-gray-50 rounded p-2">
+                        <div><div class="text-[10px] text-gray-400">平均</div><div class="font-bold text-blue-600">${stat.avg}</div></div>
+                        <div><div class="text-[10px] text-gray-400">高標</div><div class="font-bold text-green-600">${stat.highStd}</div></div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
-
-            // 切換視圖
-            document.getElementById('loginCard').classList.add('hidden');
-            document.getElementById('resultArea').classList.remove('hidden');
-        }
-
-        function resetQuery() {
-            document.getElementById('resultArea').classList.add('hidden');
-            document.getElementById('loginCard').classList.remove('hidden');
-            document.getElementById('idInput').value = '';
-        }
-
-        function showError(msg) {
-            const el = document.getElementById('errorMsg');
-            el.innerText = msg;
-            el.classList.remove('hidden');
         }
     </script>
 </body>
